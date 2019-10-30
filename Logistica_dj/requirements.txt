@@ -134,7 +134,7 @@ unittest2==1.1.0
 unity-lens-photos==1.0
 uno==0.3.3
 unotools==0.3.3
-urllib3==1.23
+urllib3==1.24.2
 uTidylib==0.2
 vatnumber==1.2
 vobject==0.8.1rc0
