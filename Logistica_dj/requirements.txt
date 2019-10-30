@@ -107,7 +107,7 @@ python-stdnum==1.2
 pytz==2018.5
 pyusb==1.0.2
 PyWebDAV==0.9.8
-PyYAML==3.11
+PyYAML==5.1
 query-string==2019.4.13
 queuelib==1.5.0
 relatorio==0.6.2
