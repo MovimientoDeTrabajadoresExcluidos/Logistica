@@ -9,6 +9,6 @@ source bin/activate
 
 pip install -r requirements.txt
 
-=======================CORRER SERVIDOR======================= 
+======================CORRER SERVIDOR====================== 
 
 python manage.py runserver 
