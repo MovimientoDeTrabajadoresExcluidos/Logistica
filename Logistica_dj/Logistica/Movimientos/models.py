@@ -81,3 +81,38 @@ class LineaDeEgr(models.Model):
 
     def __str__(self):
         return "EG-PR #{}".format(str(id(self)))
+
+
+# Cambios para distribucion
+class Distribucion(models.Model):
+    class Meta:
+        verbose_name = "Distribucion"
+        verbose_name_plural = "Distribuciones"
+    ingreso = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE, verbose_name="Ingreso")
+
+    def __str__(self):
+        return "DISTRIBUCION #{}".format(str(self.id))
+
+
+class DistribucionProducto(models.Model):
+    class Meta:
+        verbose_name = "Distribucion Producto"
+        verbose_name_plural = "Distribuciones Productos"
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name="Producto")
+    distribucion = models.ForeignKey(Distribucion, on_delete=models.CASCADE, verbose_name="Distribucion")
+    total_asignado = models.FloatField(default=0)
+
+    def __str__(self):
+        return "D-Prod #{}".format(str(self.id))
+
+
+class LineaDistribucionProducto(models.Model):
+    class Meta:
+        verbose_name = "Linea de Distribucion de Producto"
+        verbose_name_plural = "Lineas de Distribucion de Productos"
+    distribucion = models.ForeignKey(DistribucionProducto, on_delete=models.CASCADE)
+    pc = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE, verbose_name="Punto de Consumo")
+    porcentaje = models.FloatField(default=0) #deberia ser solo positivo
+
+    def __str__(self):
+        return "LD-Prod #{}".format(str(self.id))
