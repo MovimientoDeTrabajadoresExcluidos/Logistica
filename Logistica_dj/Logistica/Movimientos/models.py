@@ -116,3 +116,21 @@ class LineaDistribucionProducto(models.Model):
 
     def __str__(self):
         return "LD-Prod #{}".format(str(self.id))
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        estado_anterior = LineaDistribucionProducto.objects.get(id=self.id)
+        total_asignado = self.traerTotalAsignado() - estado_anterior.porcentaje + self.porcentaje
+        if self.porcentaje < 0 or self.porcentaje > 100 or total_asignado > 100:
+            self.porcentaje = estado_anterior.porcentaje
+        else: # si esta en 100% y suma a linea 1 y resta a linea 2 solo se me esta guardando linea 2
+            distribucion_producto = DistribucionProducto.objects.get(id=self.distribucion_id)
+            distribucion_producto.total_asignado = total_asignado
+            distribucion_producto.save()
+        return super(LineaDistribucionProducto, self).save()
+
+    def traerTotalAsignado(self):
+        total = 0
+        for pc in LineaDistribucionProducto.objects.filter(distribucion_id=self.distribucion_id):
+            total += pc.porcentaje
+        return total

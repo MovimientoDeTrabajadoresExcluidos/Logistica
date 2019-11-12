@@ -189,13 +189,6 @@ class DistribucionProductoAdmin(admin.ModelAdmin):
     #   return {}
 
     def response_post_save_change(self, request, obj):
-        #el objeto que llega es la linea del producto que acabo de guardar
-        acumulador = 0
-        for pc in LineaDistribucionProducto.objects.filter(distribucion_id=obj.id):
-            acumulador += pc.porcentaje
-        #if acumulador <= 100: esta verificacion creo q iria en el formset_save. PREGUNTAR
-        obj.total_asignado = acumulador
-        obj.save()
         id_distribucion = Distribucion.objects.get(id=obj.distribucion_id).id
         return redirect(
             "/Movimientos/distribucion/%s/change/" % (id_distribucion))  # Preguntar si esto esta bien o es una mala practica
