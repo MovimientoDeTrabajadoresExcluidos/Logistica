@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url
 from Movimientos.views import *
-from Stock.views import *
+#from Stock.views import *
 
 #, includes
 #path('admin/', include('material.admin.urls')),
@@ -25,7 +25,7 @@ from Stock.views import *
 urlpatterns = [
     path('', admin.site.urls),
     path('remito/<int:id_context>/', PDF.as_view(), name="REMITO"),
-    path('stock', Stock.as_view() ,name="Stock")
+    #path('stock', Stock.as_view() ,name="Stock")
 ]
 
 admin.site.site_header = 'Logística MTE - CTEP'
