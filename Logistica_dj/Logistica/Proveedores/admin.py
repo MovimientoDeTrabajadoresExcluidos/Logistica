@@ -1,6 +1,22 @@
 from django.contrib import admin
-
-# Register your models here.
 from .models import *
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
+# Register your models here.
 
-admin.site.register(Proveedor)
+
+class ProveedorResource(resources.ModelResource):
+    class Meta:
+        model = Proveedor
+
+class ProveedorAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+    class Meta:
+        model = Proveedor
+
+    model = Proveedor
+    resource_class = ProveedorResource
+    list_display = ['nombre_compania_o_entidad','tipo_de_proveedor', 'provincia']
+    search_fields = ['nombre_compania_o_entidad','tipo_de_proveedorn', 'provincia']
+
+admin.site.register(Proveedor, ProveedorAdmin)
+

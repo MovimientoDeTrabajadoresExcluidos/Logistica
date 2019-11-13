@@ -90,14 +90,14 @@ class LineaDePedidoIngInLine(admin.TabularInline): #ImportExportModelAdmin
     class Meta:
         model = LineaDeIng
     model = LineaDeIng
-#    resource_class = LineaIngPRResource
+    resource_class = LineaIngPRResource
     #list_display = ['producto', 'cantidad']
 
 class LineaDePedidoEgrInLine(admin.TabularInline): #ImportExportModelAdmin
     class Meta:
         model = LineaDeEgr
     model = LineaDeEgr
-#    resource_class = LineaEgrPRResource
+    resource_class = LineaEgrPRResource
     #list_display = ['producto', 'cantidad']
 
 class IngPRAdmin(ImportExportModelAdmin,admin.ModelAdmin):
@@ -125,7 +125,7 @@ class EgrPRAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
     list_display = [id, 'fecha_y_hora_de_registro', 'origen', 'destino', 'estado' , 'obtener_remito'] #
-    search_fields = [id, 'origen', 'destino', 'estado']
+    search_fields = ['origen']
 
 
 # distribucion de productos ------
