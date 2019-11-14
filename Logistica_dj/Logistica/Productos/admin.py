@@ -4,18 +4,46 @@ from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 # Register your models here.
 
-
-class ProductoResource(resources.ModelResource):
+class ProductoGenericoResource(resources.ModelResource):
     class Meta:
-        model = Producto
+        model = ProductoGenerico
 
-class ProductoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+
+class VarianteProductoResource(resources.ModelResource):
     class Meta:
-        model = Producto
+        model = VarianteProducto
 
-    model = Producto
-    resource_class = ProductoResource
-    list_display = ['tipo','denominacion', 'unidad_de_medida', 'cantidad']
-    search_fields = ['tipo','denominacion']
 
-admin.site.register(Producto, ProductoAdmin)
+class VarianteProductoInLine(admin.TabularInline):
+    class Meta:
+        model = VarianteProducto
+    model = VarianteProducto
+    resource_class = VarianteProductoResource
+    list_display = ['proveedor', 'denominacion', 'cantidad', 'pack']
+
+class VarianteProductoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+    class Meta:
+        model = VarianteProducto
+    model = VarianteProducto
+    skip_unchanged = True
+    resource_class = VarianteProductoResource
+    list_display = ['proveedor', 'denominacion', 'cantidad', 'pack']
+
+
+#TODO     search_fields = ['tipo']
+
+
+class ProductoGenericoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+    class Meta:
+        model = ProductoGenerico
+    model = ProductoGenerico
+    skip_unchanged = True
+    inlines = [VarianteProductoInLine]
+    resource_class = ProductoGenericoResource
+    list_display = ['tipo','categoria', 'unidad_de_medida']
+
+
+#TODO     search_fields = ['tipo']
+
+admin.site.register(ProductoGenerico, ProductoGenericoAdmin)
+admin.site.register(VarianteProducto, VarianteProductoAdmin)
