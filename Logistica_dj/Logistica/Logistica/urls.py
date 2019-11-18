@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
 from django.conf.urls import url
 from Movimientos.views import *
 #from Stock.views import *
@@ -26,6 +26,7 @@ urlpatterns = [
     path('', admin.site.urls),
     path('remito/<int:id_context>/', PDF.as_view(), name="REMITO"),
     #path('stock', Stock.as_view() ,name="Stock")
+    path('remito/remitos_en_masa/<str:id_context>', PDF_Multiple.as_view(), name="Remito_en_masa")
 ]
 
 admin.site.site_header = 'Logística MTE - CTEP'

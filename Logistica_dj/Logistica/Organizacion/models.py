@@ -1,8 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
+from polymorphic.models import PolymorphicModel
 
 
-class PuntoDeRecepcion(models.Model):
+class Punto(PolymorphicModel):
+    class Meta:
+        verbose_name = "Punto"
+        verbose_name_plural = "Puntos"
+
+
+class PuntoDeRecepcion(Punto):
 
     class Meta:
         verbose_name = "Punto de Recepción"
@@ -31,7 +38,7 @@ class PuntoDeRecepcion(models.Model):
         return "{n} - {te}".format(n=self.nombre, te=self.tipo_de_establecimiento)
 
 
-class PuntoDeConsumo(models.Model):
+class PuntoDeConsumo(Punto):
 
     class Meta:
         verbose_name = "Punto de Consumo"
@@ -60,3 +67,6 @@ class PuntoDeConsumo(models.Model):
 
     def __str__(self):
         return "{n} - {te}".format(n=self.nombre, te=self.tipo_de_establecimiento)
+
+    def __unicode__(self):
+        return self.nombre

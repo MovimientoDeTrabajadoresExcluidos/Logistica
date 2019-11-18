@@ -1,15 +1,25 @@
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import reverse
-
 from .models import EgresosPuntoDeRecepcion, IngresosAPuntosDeRecepcion, LineaDeEgr, LineaDeIng, Distribucion, \
     DistribucionProducto, LineaDistribucionProducto
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.safestring import mark_safe
+from .filters import *
 
 
 # Acciones adicionales
+def make_remitos_en_masa(modeladmin, request, queryset):
+    cadena = "/remito/remitos_en_masa/%s" % queryset[0].id
+    for obj in queryset:
+        if not obj.id == queryset[0].id:
+            cadena += "," + str(obj.id)
+    return redirect(cadena)
+
+make_remitos_en_masa.short_description = "Generar Remitos"
+
+
 def make_egresos_de_ingresos(modeladmin, request, queryset):
     for obj in queryset:
         if obj.estado == 'Validado': # ver como preguntar en funcion de IngresoPR.ESTADOS
@@ -53,7 +63,6 @@ def make_egresos_de_ingresos(modeladmin, request, queryset):
                         pass
         else:
             pass# aca deberia ir un mensaje de que se debe validar el ingreso para poder generar los egresos
-
 make_egresos_de_ingresos.short_description = 'Generar egresos asociados'
 
 
@@ -65,7 +74,6 @@ def make_carga_productos_automatica(modeladmin, request, queryset):
             nuevaLineaDistribucion.producto = linea.producto
             nuevaLineaDistribucion.distribucion = obj
             nuevaLineaDistribucion.save()
-
 make_carga_productos_automatica.short_description = 'Cargar Productos desde ingreso asociado'
 
 
@@ -107,8 +115,9 @@ class IngPRAdmin(ImportExportModelAdmin,admin.ModelAdmin):
     model = IngresosAPuntosDeRecepcion
     inlines = [LineaDePedidoIngInLine]
     resource_class = MovimientosIngresosPRResource
-    list_display = [id, 'fecha_y_hora_de_ingreso','origen', 'destino', 'estado']
-    search_fields = [id, 'origen', 'destino', 'estado']
+    list_display = ['id', 'fecha_y_hora_de_ingreso','origen', 'destino', 'estado']
+    # search_fields = ['id']
+    list_filter = ['fecha_y_hora_de_ingreso', OrigenIngFilter, DestinoIngFilter, 'estado']
     actions = [make_egresos_de_ingresos]
 
 
@@ -121,12 +130,12 @@ class EgrPRAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     def obtener_remito(self, obj):
         return mark_safe('<a class="btn btn-primary" href="/remito/'+str(obj.id)+'">Remito</a>')
     obtener_remito.short_description = 'Generar Remito'
+
 #    obtener_remitoallow_tags = True
-
-
-    list_display = [id, 'fecha_y_hora_de_registro', 'origen', 'destino', 'estado' , 'obtener_remito'] #
-    search_fields = [id, 'origen', 'destino', 'estado']
-
+    list_display = ['id', 'fecha_y_hora_de_registro', 'origen', 'destino', 'estado', 'obtener_remito']
+    # search_fields = ['id']
+    list_filter = ('fecha_y_hora_de_registro', OrigenEgrFilter, DestinoEgrFilter, 'estado')
+    actions = [make_remitos_en_masa]
 
 # distribucion de productos ------
 class MovimientosDistribucionResource(resources.ModelResource):
@@ -209,7 +218,6 @@ class DistribucionAdmin(admin.ModelAdmin):
 
 admin.site.register(Distribucion, DistribucionAdmin)
 admin.site.register(DistribucionProducto, DistribucionProductoAdmin)
-
 admin.site.register(IngresosAPuntosDeRecepcion, IngPRAdmin)
 admin.site.register(EgresosPuntoDeRecepcion, EgrPRAdmin)
 

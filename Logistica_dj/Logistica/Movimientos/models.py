@@ -29,7 +29,7 @@ class IngresosAPuntosDeRecepcion(models.Model):
     )
 
     def __str__(self):
-        return "IN-PR #{}".format(str(id(self)))
+        return "IN-PR #{}".format(str(self.id))
 
 
 class EgresosPuntoDeRecepcion(models.Model):
@@ -56,8 +56,10 @@ class EgresosPuntoDeRecepcion(models.Model):
     )
 
     def __str__(self):
-        return "EG-PR #{}".format(str(id(self)))
+        return "EG-PR #{}".format(str(self.id))
 
+    def __unicode__(self):
+        return self.nombre
 
 
 class LineaDeIng(models.Model):
@@ -69,7 +71,7 @@ class LineaDeIng(models.Model):
     cantidad = models.PositiveIntegerField(default = 0)
 
     def __str__(self):
-        return "ING-PR #{}".format(str(id(self)))
+        return "ING-PR #{}".format(str(self.id))
 
 class LineaDeEgr(models.Model):
     class Meta:
@@ -77,10 +79,10 @@ class LineaDeEgr(models.Model):
         verbose_name_plural = "Líneas de Egreso de PR"
     movimiento = models.ForeignKey(EgresosPuntoDeRecepcion, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name='Producto')
-    cantidad = models.PositiveIntegerField(default = 0)
+    cantidad = models.FloatField(default = 0)
 
     def __str__(self):
-        return "EG-PR #{}".format(str(id(self)))
+        return "EG-PR #{}".format(str(self.id))
 
 
 # Cambios para distribucion
