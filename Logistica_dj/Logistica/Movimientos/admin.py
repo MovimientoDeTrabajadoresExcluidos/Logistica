@@ -98,14 +98,14 @@ class LineaDePedidoIngInLine(admin.TabularInline): #ImportExportModelAdmin
     class Meta:
         model = LineaDeIng
     model = LineaDeIng
-#    resource_class = LineaIngPRResource
+    resource_class = LineaIngPRResource
     #list_display = ['producto', 'cantidad']
 
 class LineaDePedidoEgrInLine(admin.TabularInline): #ImportExportModelAdmin
     class Meta:
         model = LineaDeEgr
     model = LineaDeEgr
-#    resource_class = LineaEgrPRResource
+    resource_class = LineaEgrPRResource
     #list_display = ['producto', 'cantidad']
 
 class IngPRAdmin(ImportExportModelAdmin,admin.ModelAdmin):
@@ -130,10 +130,9 @@ class EgrPRAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     def obtener_remito(self, obj):
         return mark_safe('<a class="btn btn-primary" href="/remito/'+str(obj.id)+'">Remito</a>')
     obtener_remito.short_description = 'Generar Remito'
-
 #    obtener_remitoallow_tags = True
     list_display = ['id', 'fecha_y_hora_de_registro', 'origen', 'destino', 'estado', 'obtener_remito']
-    # search_fields = ['id']
+    # search_fields = ['origen']
     list_filter = ('fecha_y_hora_de_registro', OrigenEgrFilter, DestinoEgrFilter, 'estado')
     actions = [make_remitos_en_masa]
 
