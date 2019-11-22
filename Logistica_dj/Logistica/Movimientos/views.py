@@ -9,7 +9,6 @@ from .models import EgresosPuntoDeRecepcion, LineaDeEgr
 
 
 class PDF(View):
-
     def get(self, request, id_context, *args, **kwargs):
         movimiento = EgresosPuntoDeRecepcion.objects.filter(id=id_context)[0]
         fecha = movimiento.fecha_y_hora_de_egreso
@@ -24,6 +23,7 @@ class PDF(View):
         }
         pdf = render_pdf("template_html_a_pdf.html", {"parametros": parametros})
         return HttpResponse(pdf, content_type="application/pdf")
+
 
 class PDF_Multiple(View):
     def get(self, request, id_context, *args, **kwargs):

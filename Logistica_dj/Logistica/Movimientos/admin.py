@@ -2,11 +2,12 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import reverse
 from .models import EgresosPuntoDeRecepcion, IngresosAPuntosDeRecepcion, LineaDeEgr, LineaDeIng, Distribucion, \
-    DistribucionProducto, LineaDistribucionProducto
+    DistribucionProducto, LineaDistribucionProducto, LineaListaDestinosEgreso, ListaDestinosEgreso
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.safestring import mark_safe
 from .filters import *
+from django.contrib import messages
 
 
 # Acciones adicionales
@@ -16,7 +17,7 @@ def make_remitos_en_masa(modeladmin, request, queryset):
         if not obj.id == queryset[0].id:
             cadena += "," + str(obj.id)
     return redirect(cadena)
-
+make_remitos_en_masa.attrs = {'target': '_blank'}
 make_remitos_en_masa.short_description = "Generar Remitos"
 
 
@@ -26,8 +27,7 @@ def make_egresos_de_ingresos(modeladmin, request, queryset):
             try:
                 distribucion = Distribucion.objects.get(ingreso=obj)
             except Distribucion.DoesNotExist:
-                pass
-                return #aca deberia mandar un mensaje de que no hay distribuciones para ese ingreso y salir
+                messages.add_message(request, messages.ERROR, 'No hay una distribucion asociada al ingreso ' + obj)
 
             distribuciones = DistribucionProducto.objects.filter(distribucion=distribucion)
             egresos = []
@@ -48,9 +48,6 @@ def make_egresos_de_ingresos(modeladmin, request, queryset):
 
                     try:
                         lineaIngreso = LineaDeIng.objects.get(movimiento=obj, producto=dist.producto)
-                        # traigo linea de ingreso de ese producto
-                        # mensaje de error hay dos productos iguales en distintas lineas en el ingreso puede
-                        # arreglarse sobrecargando el formset_save() de ingresos
                         for pcs in lineasDistribucionProducto: # recorro los pcs de la distribucion actual
                             if pcs.pc == egr.destino:
                                 lineaEgreso = LineaDeEgr()
@@ -60,21 +57,36 @@ def make_egresos_de_ingresos(modeladmin, request, queryset):
                                 if lineaIngreso.cantidad > 0:
                                     lineaEgreso.save()
                     except LineaDeIng.DoesNotExist or LineaDeIng.MultipleObjectsReturned:
-                        pass
+                        messages.add_message(request, messages.WARNING,
+                                             'Hubo productos en la distribucion que no se encontraron en el ingreso')
+            messages.add_message(request, messages.SUCCESS,
+                                 'Se han generados los egresos asociados al ingreso ' + str(obj))
         else:
-            pass# aca deberia ir un mensaje de que se debe validar el ingreso para poder generar los egresos
+            messages.add_message(request, messages.ERROR, 'Debe validarse el ingreso para poder generar sus egresos')
 make_egresos_de_ingresos.short_description = 'Generar egresos asociados'
 
 
 def make_carga_productos_automatica(modeladmin, request, queryset):
     for obj in queryset:
+        ingreso = IngresosAPuntosDeRecepcion.objects.get(id=obj.ingreso_id)
         lineasIngreso = LineaDeIng.objects.filter(movimiento=obj.ingreso)
+        distribucionesExistentes = DistribucionProducto.objects.filter(distribucion_id=obj.id)
+        lineasDistribucionExistentes = LineaDistribucionProducto.objects.filter(distribucion_id__in=[o.id for o in distribucionesExistentes])
         for linea in lineasIngreso:
-            nuevaLineaDistribucion = DistribucionProducto()
-            nuevaLineaDistribucion.producto = linea.producto
-            nuevaLineaDistribucion.distribucion = obj
-            nuevaLineaDistribucion.save()
-make_carga_productos_automatica.short_description = 'Cargar Productos desde ingreso asociado'
+            if linea.producto not in [o.producto for o in distribucionesExistentes]:
+                nuevaDistribucion = DistribucionProducto()
+                nuevaDistribucion.producto = linea.producto
+                nuevaDistribucion.distribucion = obj
+                nuevaDistribucion.save()
+                listaEgreso = LineaListaDestinosEgreso.objects.filter(listaDeDestinos_id=ingreso.listaDeDestinos)
+                for destino in listaEgreso:
+                    if destino not in [o.puntoDeConsumo for o in lineasDistribucionExistentes]:
+                        nuevaLineaDistribucion = LineaDistribucionProducto()
+                        nuevaLineaDistribucion.pc = destino.puntoDeConsumo
+                        nuevaLineaDistribucion.distribucion = nuevaDistribucion
+                        nuevaLineaDistribucion.save()
+    messages.add_message(request, messages.SUCCESS, 'Se han generado los productos y destinos de las distribuciones seleccionadas')
+make_carga_productos_automatica.short_description = 'Cargar Productos y Destinos desde ingreso asociado'
 
 
 # Register your models here.
@@ -192,9 +204,9 @@ class DistribucionProductoAdmin(admin.ModelAdmin):
     search_fields = ['id', 'producto']
     readonly_fields = ['total_asignado']
 
-    # con esta funcion oculto el acceso a via menu pero permito que se modifique directamente
-    # def get_model_perms(self, request):
-    #   return {}
+    #con esta funcion oculto el acceso a via menu pero permito que se modifique directamente
+    #def get_model_perms(self, request):
+        #return {}
 
     def response_post_save_change(self, request, obj):
         id_distribucion = Distribucion.objects.get(id=obj.distribucion_id).id
@@ -215,6 +227,22 @@ class DistribucionAdmin(admin.ModelAdmin):
     actions = [make_carga_productos_automatica]
 
 
+class LineaDestinosEgresoInLine(admin.TabularInline):
+    class Meta:
+        model = LineaListaDestinosEgreso
+    model = LineaListaDestinosEgreso
+    fields = ['id', 'puntoDeConsumo']
+
+
+class ListaDestinosEgresoAdmin(admin.ModelAdmin):
+    class Meta:
+        model = ListaDestinosEgreso
+    inlines = [LineaDestinosEgresoInLine]
+    list_display = ['id', 'denominacion', 'puntoDeRecepcion']
+    search_fields = ['denominacion']
+
+
+admin.site.register(ListaDestinosEgreso, ListaDestinosEgresoAdmin)
 admin.site.register(Distribucion, DistribucionAdmin)
 admin.site.register(DistribucionProducto, DistribucionProductoAdmin)
 admin.site.register(IngresosAPuntosDeRecepcion, IngPRAdmin)

@@ -2,19 +2,37 @@ from django.db import models
 from django.utils import timezone
 from Proveedores.models import Proveedor
 from Organizacion.models import *
-from Productos.models import Producto
+from Productos.models import ProductoGenerico, VarianteProducto
 
 # Create your models here.
+class ListaDestinosEgreso(models.Model):
+    class Meta:
+        verbose_name = "Lista de Destinos"
+        verbose_name_plural = "Listas de Destinos"
+    denominacion = models.CharField(max_length=20)
+    puntoDeRecepcion = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.denominacion
+
+class LineaListaDestinosEgreso(models.Model):
+    class Meta:
+        verbose_name = "Linea de Destino"
+        verbose_name_plural = "Lineas de Destino"
+    listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE)
+    puntoDeConsumo = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'LD - #{}'.format(self.id)
 
 class IngresosAPuntosDeRecepcion(models.Model):
-
     class Meta:
         verbose_name = "Ingresos a Punto de Recepción"
         verbose_name_plural = "Ingresos a Punto de Recepción"
         ordering = ["-fecha_y_hora_de_registro"]
 
     origen = models.ForeignKey(Proveedor, on_delete=models.CASCADE, )
-    destino = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, )#default = PR ASOCIADO AL USUARIO HACER !!!)
+    destino = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, )# default = PR ASOCIADO AL USUARIO HACER !!!)
     ESTADOS = (
         ("Borrador","Borrador"),
         ("Validado","Validado"),
@@ -27,6 +45,7 @@ class IngresosAPuntosDeRecepcion(models.Model):
         default=timezone.now,
         editable=False,
     )
+    listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE)
 
     def __str__(self):
         return "IN-PR #{}".format(str(self.id))
@@ -67,7 +86,7 @@ class LineaDeIng(models.Model):
         verbose_name = "Línea de Ingreso a PR"
         verbose_name_plural = "Líneas de Ingreso a PR"
     movimiento = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name='Producto')
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto')
     cantidad = models.PositiveIntegerField(default = 0)
 
     def __str__(self):
@@ -78,7 +97,7 @@ class LineaDeEgr(models.Model):
         verbose_name = "Línea de Egreso de PR"
         verbose_name_plural = "Líneas de Egreso de PR"
     movimiento = models.ForeignKey(EgresosPuntoDeRecepcion, on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name='Producto')
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto')
     cantidad = models.FloatField(default = 0)
 
     def __str__(self):
@@ -100,7 +119,7 @@ class DistribucionProducto(models.Model):
     class Meta:
         verbose_name = "Distribucion Producto"
         verbose_name_plural = "Distribuciones Productos"
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name="Producto")
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name="Producto")
     distribucion = models.ForeignKey(Distribucion, on_delete=models.CASCADE, verbose_name="Distribucion")
     total_asignado = models.FloatField(default=0)
 
@@ -121,18 +140,32 @@ class LineaDistribucionProducto(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
-        estado_anterior = LineaDistribucionProducto.objects.get(id=self.id)
-        total_asignado = self.traerTotalAsignado() - estado_anterior.porcentaje + self.porcentaje
-        if self.porcentaje < 0 or self.porcentaje > 100 or total_asignado > 100:
-            self.porcentaje = estado_anterior.porcentaje
-        else: # si esta en 100% y suma a linea 1 y resta a linea 2 solo se me esta guardando linea 2
-            distribucion_producto = DistribucionProducto.objects.get(id=self.distribucion_id)
-            distribucion_producto.total_asignado = total_asignado
-            distribucion_producto.save()
-        return super(LineaDistribucionProducto, self).save()
+        try:
+            estado_anterior = LineaDistribucionProducto.objects.get(id=self.id)
+            total_asignado = self.traerTotalAsignado() - estado_anterior.porcentaje + self.porcentaje
+            if self.porcentaje < 0 or self.porcentaje > 100 or total_asignado > 100:
+                self.porcentaje = estado_anterior.porcentaje
+            else: # si esta en 100% y suma a linea 1 y resta a linea 2 solo se me esta guardando linea 2
+                distribucion_producto = DistribucionProducto.objects.get(id=self.distribucion_id)
+                distribucion_producto.total_asignado = total_asignado
+                distribucion_producto.save()
+
+        except LineaDistribucionProducto.DoesNotExist:
+            total_asignado = self.porcentaje
+            if self.porcentaje < 0 or self.porcentaje > 100 or total_asignado > 100:
+                self.porcentaje = 0
+            else:  # si esta en 100% y suma a linea 1 y resta a linea 2 solo se me esta guardando linea 2
+                distribucion_producto = DistribucionProducto.objects.get(id=self.distribucion_id)
+                distribucion_producto.total_asignado = total_asignado
+                distribucion_producto.save()
+
+        finally:
+            return super(LineaDistribucionProducto, self).save()
 
     def traerTotalAsignado(self):
         total = 0
         for pc in LineaDistribucionProducto.objects.filter(distribucion_id=self.distribucion_id):
             total += pc.porcentaje
         return total
+
+
