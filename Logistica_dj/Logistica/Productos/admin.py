@@ -32,8 +32,6 @@ class VarianteProductoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
     list_display = ['proveedor', 'denominacion', 'cantidad', 'pack']
     list_filter = [TipoProductoEnVarianteProductoFilter, ProveedorEnVarianteProductoFilter, DenominacionEnVarianteProductoFilter]
 
-#TODO     search_fields = ['tipo']
-
 
 class ProductoGenericoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
     class Meta:
