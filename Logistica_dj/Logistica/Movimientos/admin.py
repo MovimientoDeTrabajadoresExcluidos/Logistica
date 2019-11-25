@@ -80,7 +80,7 @@ def make_carga_productos_automatica(modeladmin, request, queryset):
                 nuevaDistribucion.save()
                 listaEgreso = LineaListaDestinosEgreso.objects.filter(listaDeDestinos_id=ingreso.listaDeDestinos)
                 for destino in listaEgreso:
-                    if destino not in [o.puntoDeConsumo for o in lineasDistribucionExistentes]:
+                    if destino not in [o.pc for o in lineasDistribucionExistentes]:
                         nuevaLineaDistribucion = LineaDistribucionProducto()
                         nuevaLineaDistribucion.pc = destino.puntoDeConsumo
                         nuevaLineaDistribucion.distribucion = nuevaDistribucion
