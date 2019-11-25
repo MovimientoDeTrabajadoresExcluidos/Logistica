@@ -223,7 +223,7 @@ class DistribucionAdmin(admin.ModelAdmin):
     inlines = [DistribucionProductoInLine]
     resource_class = MovimientosDistribucionResource
     list_display = ['id', 'ingreso']
-    search_fields = ['id', 'ingreso']
+    search_fields = ['id',]
     actions = [make_carga_productos_automatica]
 
 
