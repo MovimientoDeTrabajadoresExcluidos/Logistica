@@ -2,6 +2,8 @@ from django.contrib import admin
 from .models import *
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from .filters import TipoProductoFilter, DenominacionEnVarianteProductoFilter, ProveedorEnVarianteProductoFilter, \
+    TipoProductoEnVarianteProductoFilter
 # Register your models here.
 
 class ProductoGenericoResource(resources.ModelResource):
@@ -28,7 +30,7 @@ class VarianteProductoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
     skip_unchanged = True
     resource_class = VarianteProductoResource
     list_display = ['proveedor', 'denominacion', 'cantidad', 'pack']
-
+    list_filter = [TipoProductoEnVarianteProductoFilter, ProveedorEnVarianteProductoFilter, DenominacionEnVarianteProductoFilter]
 
 #TODO     search_fields = ['tipo']
 
@@ -41,9 +43,8 @@ class ProductoGenericoAdmin(ImportExportModelAdmin,admin.ModelAdmin):
     inlines = [VarianteProductoInLine]
     resource_class = ProductoGenericoResource
     list_display = ['tipo','categoria', 'unidad_de_medida']
+    list_filter = [TipoProductoFilter, 'categoria', 'unidad_de_medida',]
 
-
-#TODO     search_fields = ['tipo']
 
 admin.site.register(ProductoGenerico, ProductoGenericoAdmin)
 admin.site.register(VarianteProducto, VarianteProductoAdmin)
