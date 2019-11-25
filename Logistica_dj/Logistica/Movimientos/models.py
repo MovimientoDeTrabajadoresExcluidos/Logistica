@@ -20,7 +20,7 @@ class LineaListaDestinosEgreso(models.Model):
         verbose_name = "Linea de Destino"
         verbose_name_plural = "Lineas de Destino"
     listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE)
-    puntoDeConsumo = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE)
+    puntoDeConsumo = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE, blank=True)
 
     def __str__(self):
         return 'LD - #{}'.format(self.id)
@@ -31,8 +31,8 @@ class IngresosAPuntosDeRecepcion(models.Model):
         verbose_name_plural = "Ingresos a Punto de Recepción"
         ordering = ["-fecha_y_hora_de_registro"]
 
-    origen = models.ForeignKey(Proveedor, on_delete=models.CASCADE, )
-    destino = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, )# default = PR ASOCIADO AL USUARIO HACER !!!)
+    origen = models.ForeignKey(Proveedor, on_delete=models.CASCADE, default="" )
+    destino = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, default="")# default = PR ASOCIADO AL USUARIO HACER !!!)
     ESTADOS = (
         ("Borrador","Borrador"),
         ("Validado","Validado"),
@@ -45,7 +45,7 @@ class IngresosAPuntosDeRecepcion(models.Model):
         default=timezone.now,
         editable=False,
     )
-    listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE)
+    listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE, default="")
 
     def __str__(self):
         return "IN-PR #{}".format(str(self.id))
@@ -58,8 +58,8 @@ class EgresosPuntoDeRecepcion(models.Model):
         verbose_name_plural = "Egreso Punto de Recepción"
         ordering = ["-fecha_y_hora_de_registro"]
 
-    origen = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, )#default = PR ASOCIADO AL USUARIO HACER !!!)
-    destino = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE, )
+    origen = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE, default="")#default = PR ASOCIADO AL USUARIO HACER !!!)
+    destino = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE, default="")
     ESTADOS = (
         ("Borrador","Borrador"),
         ("Validado","Validado"),
@@ -85,8 +85,8 @@ class LineaDeIng(models.Model):
     class Meta:
         verbose_name = "Línea de Ingreso a PR"
         verbose_name_plural = "Líneas de Ingreso a PR"
-    movimiento = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE)
-    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto')
+    movimiento = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE, default="")
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto', default="", blank=True)
     cantidad = models.PositiveIntegerField(default = 0)
 
     def __str__(self):
@@ -96,8 +96,8 @@ class LineaDeEgr(models.Model):
     class Meta:
         verbose_name = "Línea de Egreso de PR"
         verbose_name_plural = "Líneas de Egreso de PR"
-    movimiento = models.ForeignKey(EgresosPuntoDeRecepcion, on_delete=models.CASCADE)
-    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto')
+    movimiento = models.ForeignKey(EgresosPuntoDeRecepcion, on_delete=models.CASCADE, default="")
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name='Producto', default="", blank=True)
     cantidad = models.FloatField(default = 0)
 
     def __str__(self):
@@ -105,11 +105,12 @@ class LineaDeEgr(models.Model):
 
 
 # Cambios para distribucion
+# Cambios para distribucion
 class Distribucion(models.Model):
     class Meta:
         verbose_name = "Distribucion"
         verbose_name_plural = "Distribuciones"
-    ingreso = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE, verbose_name="Ingreso")
+    ingreso = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE, verbose_name="Ingreso", default="")
 
     def __str__(self):
         return "DISTRIBUCION #{}".format(str(self.id))
@@ -119,9 +120,9 @@ class DistribucionProducto(models.Model):
     class Meta:
         verbose_name = "Distribucion Producto"
         verbose_name_plural = "Distribuciones Productos"
-    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name="Producto")
-    distribucion = models.ForeignKey(Distribucion, on_delete=models.CASCADE, verbose_name="Distribucion")
-    total_asignado = models.FloatField(default=0)
+    producto = models.ForeignKey(VarianteProducto, on_delete=models.CASCADE, verbose_name="Producto", default="", blank= True)
+    distribucion = models.ForeignKey(Distribucion, on_delete=models.CASCADE, verbose_name="Distribucion", default="")
+    total_asignado = models.FloatField(default=0, help_text="")
 
     def __str__(self):
         return "D-Prod #{}".format(str(self.id))

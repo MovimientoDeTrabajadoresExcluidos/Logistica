@@ -21,8 +21,8 @@ class PuntoDeRecepcionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     inventario.short_description = 'Inventario'
 
 
-    list_display = [id, 'nombre', 'localidad', 'provincia', 'responsable' , 'inventario'] #
-    search_fields = [id, 'nombre', 'localidad', 'provincia', 'responsable']
+    list_display = ['nombre', 'localidad', 'provincia', 'responsable' , 'inventario']
+    search_fields = ['nombre', 'localidad', 'provincia', 'responsable']
 
 
 
@@ -35,7 +35,7 @@ class PuntoDeConsumoAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         model = PuntoDeConsumo
 
     resource_class = PuntoDeConsumoResource
-    list_display = [id, 'nombre', 'localidad', 'provincia']  #
+    list_display = ['nombre', 'localidad', 'provincia', 'responsable']  #
     search_fields = [id, 'nombre', 'localidad', 'provincia', 'responsable']
 
 

@@ -200,7 +200,7 @@ class DistribucionProductoAdmin(admin.ModelAdmin):
     inlines = [LineaDeDistribucionProductoInLine]
     resource_class = MovimientosDistribucionProductoResource
     fields = ['producto', 'distribucion', 'total_asignado']
-    list_display = ['id', 'producto']
+    list_display = ['id', 'producto', 'distribucion', 'total_asignado']
     search_fields = ['id', 'producto']
     readonly_fields = ['total_asignado']
 

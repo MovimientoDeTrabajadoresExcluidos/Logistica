@@ -23,15 +23,17 @@ class PuntoDeRecepcion(Punto):
         ('Merendero-Comedor', 'Merendero-Comedor'),
     )
 
-    tipo_de_establecimiento = models.CharField(max_length=20, default='', choices=TIPO_DE_ESTABLECIMIENTO)
     nombre = models.CharField(max_length=50)
     direccion = models.CharField(max_length=80)
     localidad = models.CharField(max_length=40)
     provincia = models.CharField(max_length=40)
+    tipo_de_establecimiento = models.CharField(max_length=20, default='', choices=TIPO_DE_ESTABLECIMIENTO)
     responsable = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
     )
+    telefono = models.CharField(max_length=20, verbose_name='Teléfono', default="")
+    email = models.EmailField(default="")
     observacion = models.TextField(blank=True)
 
     def __str__(self):
@@ -63,6 +65,8 @@ class PuntoDeConsumo(Punto):
         default=''
     )
     tipo_de_establecimiento = models.CharField(max_length=20, default='', choices=TIPO_DE_ESTABLECIMIENTO)
+    responsable = models.CharField(max_length=50, default="")
+    telefono = models.CharField(max_length=20, verbose_name='Teléfono', default="")
     observacion = models.TextField(blank=True)
 
     def __str__(self):

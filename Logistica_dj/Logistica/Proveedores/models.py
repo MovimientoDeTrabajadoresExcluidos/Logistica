@@ -22,7 +22,8 @@ class Proveedor(models.Model):
     provincia = models.CharField(max_length=40, default='')
     #puntos_de_recepcion_asociados = models.ManyToManyField('PuntoDeRecepcion')
     nombre_contacto = models.CharField(max_length=40, default='')
-    #teléfono y correo electrónico
+    telefono = models.CharField(max_length=20, verbose_name='Teléfono', default="")
+    email = models.EmailField(default="")
     observacion = models.TextField(default= '', blank=True)
 
 
