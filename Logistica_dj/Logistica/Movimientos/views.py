@@ -6,6 +6,7 @@ from .utileria import render_pdf, render_multiple_pdf
 from django.views.generic import View
 from django.http import HttpResponse
 from .models import EgresosPuntoDeRecepcion, LineaDeEgr
+from Organizacion.models import PuntoDeConsumo
 
 
 class PDF(View):
@@ -14,11 +15,13 @@ class PDF(View):
         fecha = movimiento.fecha_y_hora_de_egreso
         origen = movimiento.origen
         destino = movimiento.destino
+        pc = PuntoDeConsumo.objects.get(id=destino.id)
         lineas = LineaDeEgr.objects.filter(movimiento=id_context)
         parametros = {
             'fecha': fecha,
             'origen': origen,
             'destino': destino,
+            'responsable': pc.responsable,
             'lineas': lineas
         }
         pdf = render_pdf("template_html_a_pdf.html", {"parametros": parametros})
@@ -34,11 +37,13 @@ class PDF_Multiple(View):
             fecha = m.fecha_y_hora_de_egreso
             origen = m.origen
             destino = m.destino
+            pc = PuntoDeConsumo.objects.get(id=destino.id)
             lineas = LineaDeEgr.objects.filter(movimiento=m.id)
             egresos.append({'parametros': {
                 'fecha': fecha,
                 'origen': origen,
                 'destino': destino,
+                'responsable': pc.responsable,
                 'lineas': lineas
             }
             })

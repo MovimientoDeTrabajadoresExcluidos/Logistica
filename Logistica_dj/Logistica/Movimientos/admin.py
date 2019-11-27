@@ -11,44 +11,47 @@ from django.contrib import messages
 
 
 # Acciones adicionales
+# TODO duplicacion de ditribuciones
 def make_remitos_en_masa(modeladmin, request, queryset):
     cadena = "/remito/remitos_en_masa/%s" % queryset[0].id
     for obj in queryset:
         if not obj.id == queryset[0].id:
             cadena += "," + str(obj.id)
     return redirect(cadena)
-make_remitos_en_masa.attrs = {'target': '_blank'}
+
+
 make_remitos_en_masa.short_description = "Generar Remitos"
 
 
 def make_egresos_de_ingresos(modeladmin, request, queryset):
     for obj in queryset:
-        if obj.estado == 'Validado': # ver como preguntar en funcion de IngresoPR.ESTADOS
+        if obj.estado == 'Validado':  # ver como preguntar en funcion de IngresoPR.ESTADOS
             try:
-                distribucion = Distribucion.objects.get(ingreso=obj)
+                distribucion = Distribucion.objects.get(id=obj.distribucion_id)
             except Distribucion.DoesNotExist:
                 messages.add_message(request, messages.ERROR, 'No hay una distribucion asociada al ingreso ' + obj)
 
             distribuciones = DistribucionProducto.objects.filter(distribucion=distribucion)
             egresos = []
-            for dist in distribuciones: # recorrro los productos de la distribucion
+            for dist in distribuciones:  # recorrro los productos de la distribucion
                 # recorro los pc y genero un egreso para cada uno
                 lineasDistribucionProducto = LineaDistribucionProducto.objects.filter(distribucion=dist)
                 for pcs in lineasDistribucionProducto:
-                    if pcs.pc not in [e.destino for e in egresos]: #si todavia no agregue el pc lo agrego
+                    if pcs.pc not in [e.destino for e in egresos]:  # si todavia no agregue el pc lo agrego
                         egreso = EgresosPuntoDeRecepcion()
                         egreso.destino = pcs.pc
-                        egreso.origen = obj.destino # ver esto
+                        egreso.origen = obj.destino
+                        egreso.ingreso_asociado = obj
                         egreso.save()
                         egresos.append(egreso)
 
-            for egr in egresos: # recorro los egresos generados
-                for dist in distribuciones: # recorro los productos de la distribucion
+            for egr in egresos:  # recorro los egresos generados
+                for dist in distribuciones:  # recorro los productos de la distribucion
                     lineasDistribucionProducto = LineaDistribucionProducto.objects.filter(distribucion=dist)
 
                     try:
                         lineaIngreso = LineaDeIng.objects.get(movimiento=obj, producto=dist.producto)
-                        for pcs in lineasDistribucionProducto: # recorro los pcs de la distribucion actual
+                        for pcs in lineasDistribucionProducto:  # recorro los pcs de la distribucion actual
                             if pcs.pc == egr.destino:
                                 lineaEgreso = LineaDeEgr()
                                 lineaEgreso.producto = dist.producto
@@ -63,30 +66,9 @@ def make_egresos_de_ingresos(modeladmin, request, queryset):
                                  'Se han generados los egresos asociados al ingreso ' + str(obj))
         else:
             messages.add_message(request, messages.ERROR, 'Debe validarse el ingreso para poder generar sus egresos')
+
+
 make_egresos_de_ingresos.short_description = 'Generar egresos asociados'
-
-
-def make_carga_productos_automatica(modeladmin, request, queryset):
-    for obj in queryset:
-        ingreso = IngresosAPuntosDeRecepcion.objects.get(id=obj.ingreso_id)
-        lineasIngreso = LineaDeIng.objects.filter(movimiento=obj.ingreso)
-        distribucionesExistentes = DistribucionProducto.objects.filter(distribucion_id=obj.id)
-        lineasDistribucionExistentes = LineaDistribucionProducto.objects.filter(distribucion_id__in=[o.id for o in distribucionesExistentes])
-        for linea in lineasIngreso:
-            if linea.producto not in [o.producto for o in distribucionesExistentes]:
-                nuevaDistribucion = DistribucionProducto()
-                nuevaDistribucion.producto = linea.producto
-                nuevaDistribucion.distribucion = obj
-                nuevaDistribucion.save()
-                listaEgreso = LineaListaDestinosEgreso.objects.filter(listaDeDestinos_id=ingreso.listaDeDestinos)
-                for destino in listaEgreso:
-                    if destino not in [o.pc for o in lineasDistribucionExistentes]:
-                        nuevaLineaDistribucion = LineaDistribucionProducto()
-                        nuevaLineaDistribucion.pc = destino.puntoDeConsumo
-                        nuevaLineaDistribucion.distribucion = nuevaDistribucion
-                        nuevaLineaDistribucion.save()
-    messages.add_message(request, messages.SUCCESS, 'Se han generado los productos y destinos de las distribuciones seleccionadas')
-make_carga_productos_automatica.short_description = 'Cargar Productos y Destinos desde ingreso asociado'
 
 
 # Register your models here.
@@ -94,83 +76,79 @@ class MovimientosEgresosPRResource(resources.ModelResource):
     class Meta:
         model = EgresosPuntoDeRecepcion
 
+
 class MovimientosIngresosPRResource(resources.ModelResource):
     class Meta:
         model = IngresosAPuntosDeRecepcion
+
 
 class LineaIngPRResource(resources.ModelResource):
     class Meta:
         model = LineaDeIng
 
+
 class LineaEgrPRResource(resources.ModelResource):
     class Meta:
         model = LineaDeEgr
 
-class LineaDePedidoIngInLine(admin.TabularInline): #ImportExportModelAdmin
+
+class LineaDePedidoIngInLine(admin.TabularInline):  # ImportExportModelAdmin
     class Meta:
         model = LineaDeIng
+
     model = LineaDeIng
     resource_class = LineaIngPRResource
-    #list_display = ['producto', 'cantidad']
 
-class LineaDePedidoEgrInLine(admin.TabularInline): #ImportExportModelAdmin
+
+class LineaDePedidoEgrInLine(admin.TabularInline):  # ImportExportModelAdmin
     class Meta:
         model = LineaDeEgr
+
     model = LineaDeEgr
     resource_class = LineaEgrPRResource
-    #list_display = ['producto', 'cantidad']
 
-class IngPRAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+
+class IngPRAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     class Meta:
         model = IngresosAPuntosDeRecepcion
 
     model = IngresosAPuntosDeRecepcion
     inlines = [LineaDePedidoIngInLine]
     resource_class = MovimientosIngresosPRResource
-    list_display = ['id', 'fecha_y_hora_de_ingreso','origen', 'destino', 'estado']
-    # search_fields = ['id']
+    list_display = ['miNombre', 'origen', 'destino', 'fecha_y_hora_de_ingreso', 'estado']
     list_filter = ['fecha_y_hora_de_ingreso', OrigenIngFilter, DestinoIngFilter, 'estado']
     actions = [make_egresos_de_ingresos]
+
+    def miNombre(self, obj):
+        return str(obj)
+    miNombre.short_description = 'Ingreso'
 
 
 class EgrPRAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     class Meta:
         model = EgresosPuntoDeRecepcion
+
     inlines = [LineaDePedidoEgrInLine]
     resource_class = MovimientosEgresosPRResource
-
-    def obtener_remito(self, obj):
-        return mark_safe('<a class="btn btn-primary" href="/remito/'+str(obj.id)+'">Remito</a>')
-    obtener_remito.short_description = 'Generar Remito'
-#    obtener_remitoallow_tags = True
-    list_display = ['id', 'fecha_y_hora_de_registro', 'origen', 'destino', 'estado', 'obtener_remito']
-    # search_fields = ['origen']
-    list_filter = ('fecha_y_hora_de_registro', OrigenEgrFilter, DestinoEgrFilter, 'estado')
+    list_display = ['origen', 'destino', 'ingreso_asociado', 'fecha_y_hora_de_registro', 'estado', 'obtener_remito']
+    list_filter = ('fecha_y_hora_de_registro', OrigenEgrFilter, DestinoEgrFilter, IngresoEgrFilter, 'estado')
     actions = [make_remitos_en_masa]
 
+    def obtener_remito(self, obj):
+        return mark_safe('<a class="btn btn-primary" href="/remito/' + str(obj.id) + '">Remito</a>')
+    obtener_remito.short_description = 'Generar Remito'
+
+
 # distribucion de productos ------
-class MovimientosDistribucionResource(resources.ModelResource):
-    class Meta:
-        model = Distribucion
-
-
-class MovimientosDistribucionProductoResource(resources.ModelResource):
-    class Meta:
-        model = DistribucionProducto
-
-
-class LineaDeDistribucionProductoResource(resources.ModelResource):
-    class Meta:
-        model = LineaDistribucionProducto
-
-
 class LineaDeDistribucionProductoInLine(admin.TabularInline):
     class Meta:
         model = LineaDistribucionProducto
 
     model = LineaDistribucionProducto
-    # fields = ['id', 'producto', 'porcentaje']
-    list_display = ['id', 'pc', 'porcentaje']
+    list_display = ['id', 'pc', 'porcentajeFormateado']
+
+    def porcentajeFormateado(self, obj):
+        return str(obj.porcentaje) + '%'
 
 
 class EditLinkToInlineObject(object):
@@ -188,32 +166,36 @@ class DistribucionProductoInLine(EditLinkToInlineObject, admin.TabularInline):
     # estas son las lineas de cada distribucion a pc
     class Meta:
         model = DistribucionProducto
+
     model = DistribucionProducto
-    fields = ['id', 'edit_link', 'producto', 'total_asignado']
-    readonly_fields = ['edit_link', 'total_asignado']
+    fields = ['id', 'edit_link', 'producto', 'totalAsignadoFormateado']
+    readonly_fields = ['edit_link', 'totalAsignadoFormateado']
+
+    def totalAsignadoFormateado(self, obj):
+        return str(obj.total_asignado) + '%'
+
+    totalAsignadoFormateado.short_description = 'Total Asignado'
 
 
 class DistribucionProductoAdmin(admin.ModelAdmin):
-    # estas son las distribuciones, debe haber solo una por cada ingreso
     class Meta:
         model = DistribucionProducto
-    inlines = [LineaDeDistribucionProductoInLine]
-    resource_class = MovimientosDistribucionProductoResource
-    fields = ['producto', 'distribucion', 'total_asignado']
-    list_display = ['id', 'producto', 'distribucion', 'total_asignado']
-    search_fields = ['id', 'producto']
-    readonly_fields = ['total_asignado']
 
-    #con esta funcion oculto el acceso a via menu pero permito que se modifique directamente
-    #def get_model_perms(self, request):
-        #return {}
+    inlines = [LineaDeDistribucionProductoInLine]
+    fields = ['producto', 'distribucion', 'totalAsignadoFormateado']
+    list_display = ['id', 'producto', 'distribucion', 'totalAsignadoFormateado']
+    search_fields = ['id', 'producto']
+    readonly_fields = ['totalAsignadoFormateado']
+
+    def totalAsignadoFormateado(self, obj):
+        return str(obj.total_asignado) + '%'
+    totalAsignadoFormateado.short_description = 'Total Asignado'
 
     def response_post_save_change(self, request, obj):
         id_distribucion = Distribucion.objects.get(id=obj.distribucion_id).id
         return redirect(
-            "/Movimientos/distribucion/%s/change/" % (id_distribucion))  # Preguntar si esto esta bien o es una mala practica
-        # arreglar para q si se elimina tambien devuelva al menu distribucion o que no muestre el boton eliminar a la
-        # derecha debajo de los guardar
+            "/Movimientos/distribucion/%s/change/" % (
+                id_distribucion))
 
 
 class DistribucionAdmin(admin.ModelAdmin):
@@ -221,32 +203,12 @@ class DistribucionAdmin(admin.ModelAdmin):
         model = Distribucion
 
     inlines = [DistribucionProductoInLine]
-    resource_class = MovimientosDistribucionResource
-    list_display = ['id', 'ingreso']
-    search_fields = ['id',]
-    actions = [make_carga_productos_automatica]
+    list_display = ['denominacion', 'punto_de_recepcion_asociado', 'fecha_de_creacion']
+    list_filter = ['fecha_de_creacion', IngresoDistribucionFilter, PuntoDeRecepcionDistribucionFilter, ]
+    # actions = [make_carga_productos_automatica] todo agregar duplicar distribucion y quitar carga automatica
 
 
-class LineaDestinosEgresoInLine(admin.TabularInline):
-    class Meta:
-        model = LineaListaDestinosEgreso
-    model = LineaListaDestinosEgreso
-    fields = ['id', 'puntoDeConsumo']
-
-
-class ListaDestinosEgresoAdmin(admin.ModelAdmin):
-    class Meta:
-        model = ListaDestinosEgreso
-    inlines = [LineaDestinosEgresoInLine]
-    list_display = ['id', 'denominacion', 'puntoDeRecepcion']
-    search_fields = ['denominacion']
-
-
-admin.site.register(ListaDestinosEgreso, ListaDestinosEgresoAdmin)
 admin.site.register(Distribucion, DistribucionAdmin)
 admin.site.register(DistribucionProducto, DistribucionProductoAdmin)
 admin.site.register(IngresosAPuntosDeRecepcion, IngPRAdmin)
 admin.site.register(EgresosPuntoDeRecepcion, EgrPRAdmin)
-
-
-
