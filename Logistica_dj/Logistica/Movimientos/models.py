@@ -11,8 +11,6 @@ class Distribucion(models.Model):
         verbose_name = "Distribucion"
         verbose_name_plural = "Distribuciones"
     denominacion = models.CharField(max_length=50)
-    # TODO eliminar la linea siguiente cuando todo funcione
-    # ingreso = models.ForeignKey(IngresosAPuntosDeRecepcion, on_delete=models.CASCADE, verbose_name="Ingreso", default="")
     fecha_de_creacion = models.DateField(default=timezone.now)
     punto_de_recepcion_asociado = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE)
 
@@ -76,31 +74,6 @@ class LineaDistribucionProducto(models.Model):
             total += pc.porcentaje
         return total
 
-# TODO eliminar las listas de destinos
-class ListaDestinosEgreso(models.Model):
-    class Meta:
-        verbose_name = "Lista de Destinos"
-        verbose_name_plural = "Listas de Destinos"
-
-    denominacion = models.CharField(max_length=20)
-    puntoDeRecepcion = models.ForeignKey(PuntoDeRecepcion, on_delete=models.CASCADE)
-    ultima_modificacion = models.DateField(default=timezone.now,)
-
-    def __str__(self):
-        return self.denominacion
-
-
-class LineaListaDestinosEgreso(models.Model):
-    class Meta:
-        verbose_name = "Linea de Destino"
-        verbose_name_plural = "Lineas de Destino"
-
-    listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE)
-    puntoDeConsumo = models.ForeignKey(PuntoDeConsumo, on_delete=models.CASCADE, blank=True)
-
-    def __str__(self):
-        return 'LD - #{}'.format(self.id)
-
 
 class IngresosAPuntosDeRecepcion(models.Model):
     class Meta:
@@ -124,8 +97,6 @@ class IngresosAPuntosDeRecepcion(models.Model):
         editable=False,
     )
 
-    # TODO eliminar la linea siguiente cuando todo funcione
-    # listaDeDestinos = models.ForeignKey(ListaDestinosEgreso, on_delete=models.CASCADE, default="")
     distribucion = models.ForeignKey(Distribucion, on_delete=models.CASCADE)
 
     def __str__(self):

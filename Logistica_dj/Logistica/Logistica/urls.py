@@ -18,6 +18,8 @@ from django.urls import path, re_path
 from django.conf.urls import url
 from Movimientos.views import *
 #from Stock.views import *
+from django.conf import settings
+from django.conf.urls.static import static
 
 #, includes
 #path('admin/', include('material.admin.urls')),
@@ -25,8 +27,12 @@ from Movimientos.views import *
 urlpatterns = [
     path('', admin.site.urls),
     path('remito/<int:id_context>/', PDF.as_view(), name="REMITO"),
-    #path('stock', Stock.as_view() ,name="Stock")
+    # path('stock', Stock.as_view() ,name="Stock")
     path('remito/remitos_en_masa/<str:id_context>', PDF_Multiple.as_view(), name="Remito_en_masa")
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 admin.site.site_header = 'Logística MTE - CTEP'

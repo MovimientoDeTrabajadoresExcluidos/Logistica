@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import reverse
 from .models import EgresosPuntoDeRecepcion, IngresosAPuntosDeRecepcion, LineaDeEgr, LineaDeIng, Distribucion, \
-    DistribucionProducto, LineaDistribucionProducto, LineaListaDestinosEgreso, ListaDestinosEgreso
+    DistribucionProducto, LineaDistribucionProducto
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from django.utils.safestring import mark_safe
@@ -11,7 +11,28 @@ from django.contrib import messages
 
 
 # Acciones adicionales
-# TODO duplicacion de ditribuciones
+# TODO autocompletado de pc segun pr asociado a distribucion
+def duplicar_distribucion(modeladmin, request, queryset):
+    for obj in queryset:
+        nueva_dist = Distribucion()
+        nueva_dist.denominacion = obj.denominacion + ' - Copia'
+        nueva_dist.punto_de_recepcion_asociado = obj.punto_de_recepcion_asociado
+        nueva_dist.save()
+        for linea_dist in DistribucionProducto.objects.filter(distribucion_id=obj.id):
+            nueva_linea_dist = DistribucionProducto()
+            nueva_linea_dist.distribucion = nueva_dist
+            nueva_linea_dist.producto = linea_dist.producto
+            nueva_linea_dist.total_asignado = linea_dist.total_asignado
+            nueva_linea_dist.save()
+            for linea_dist_producto in LineaDistribucionProducto.objects.filter(distribucion_id=linea_dist.id):
+                nueva_linea_producto = LineaDistribucionProducto()
+                nueva_linea_producto.distribucion = nueva_linea_dist
+                nueva_linea_producto.pc = linea_dist_producto.pc
+                nueva_linea_producto.porcentaje = linea_dist_producto.porcentaje
+                nueva_linea_producto.save()
+    messages.add_message(request, messages.SUCCESS, 'Se ha dupĺicado la distribucion')
+duplicar_distribucion.short_description = 'Duplicar Distribucion'
+
 def make_remitos_en_masa(modeladmin, request, queryset):
     cadena = "/remito/remitos_en_masa/%s" % queryset[0].id
     for obj in queryset:
@@ -205,7 +226,7 @@ class DistribucionAdmin(admin.ModelAdmin):
     inlines = [DistribucionProductoInLine]
     list_display = ['denominacion', 'punto_de_recepcion_asociado', 'fecha_de_creacion']
     list_filter = ['fecha_de_creacion', IngresoDistribucionFilter, PuntoDeRecepcionDistribucionFilter, ]
-    # actions = [make_carga_productos_automatica] todo agregar duplicar distribucion y quitar carga automatica
+    actions = [duplicar_distribucion] # todo agregar cargado automatico de pc segun pr
 
 
 admin.site.register(Distribucion, DistribucionAdmin)
