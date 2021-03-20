@@ -40,7 +40,7 @@ idna==2.7
 incremental==17.5.0
 ipaddress==1.0.22
 jdcal==1.4
-Jinja2==2.8
+Jinja2==2.11.3
 jsonrpc2==0.4.1
 keyring==7.3
 launchpadlib==1.10.3
