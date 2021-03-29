@@ -80,7 +80,7 @@ pycurl==7.43.0
 pydbus==0.6.0
 PyDispatcher==2.0.5
 pydot==1.0.29
-Pygments==2.1
+Pygments==2.7.4
 pygobject==3.20.0
 pygpgme==0.3
 PyHamcrest==1.9.0
