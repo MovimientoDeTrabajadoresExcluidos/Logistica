@@ -57,7 +57,7 @@ ninja2==0.1
 numpy==1.15.1
 oauth==1.0.1
 openpyxl==2.5.12
-paramiko==1.16.0
+paramiko==2.10.1
 parsel==1.5.0
 passlib==1.6.5
 pathlib==1.0.1
