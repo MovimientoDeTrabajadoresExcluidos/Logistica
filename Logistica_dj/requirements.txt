@@ -88,7 +88,7 @@ pyinotify==0.9.6
 pyOpenSSL==18.0.0
 pyparsing==2.4.0
 pyPdf==1.13
-PyPDF2==1.25.1
+PyPDF2==1.27.5
 pysqlite==1.0.1
 pytest==2.6.0
 python-dateutil==2.7.3
