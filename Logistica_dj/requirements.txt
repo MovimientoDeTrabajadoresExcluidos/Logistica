@@ -105,7 +105,7 @@ PyYAML==3.11
 query-string==2019.4.13
 queuelib==1.5.0
 relatorio==0.6.2
-reportlab==3.3.0
+reportlab==3.5.55
 request==2019.4.13
 requests==2.19.1
 roman==2.0.0
